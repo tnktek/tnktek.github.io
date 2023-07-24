@@ -1,35 +1,27 @@
-name: Deploy to GitHub pages
-on:
-  push:
-    branches: [main]
-env:
-  BUILD_FOLDER: .output/public # or .output/public/yourrepositoryname/
+on: push
+name: 🚀 Deploy website on push
 jobs:
-  build:
+  web-deploy:
+    name: 🎉 Deploy
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/maain'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Generate static Nuxt 3 files
-        uses: actions/setup-node@v3
+      - name: Setup Node.js for use with actions
+        uses: actions/setup-node@v1
         with:
-          node-version: "16"
-          cache: 'yarn'
-      
-      - run: |
-          yarn install
-          yarn generate
-      - name: Init new repo in $BUILD_FOLDER and commit generated files
-        run: |
-          grep -rnwl "<link rel=\"prefetch\"" $BUILD_FOLDER | xargs sed -i 's$<link rel="prefetch" href="[^"]*\.\(jpg\|png\|webm\|jpeg\|ttg\|svg\|gif\)">$$g'
-          cd $BUILD_FOLDER
-          touch .nojekyll
-          git init
-          git add -A
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git commit -m 'deploy'
-      - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4
+          node-version: 18
+
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v2.5.0
+
+      - name: Clean install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run build.full
+
+      - name: deploy
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          folder: ${{env.BUILD_FOLDER}}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
